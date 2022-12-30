@@ -1,0 +1,2 @@
+python-telegram-bot==13.11
+Scrapy==2.6.1
