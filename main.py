@@ -10,6 +10,8 @@ Usage:
 import logging
 import json
 import os
+import copy
+
 
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
@@ -57,11 +59,11 @@ def tv(update: Update, context: CallbackContext) -> None:
     
     # init day 0
     today = data[0]["day"]
-    cont = True
     line = ""
-
+    list_events = []
+    dict_event = {}
     # init message body
-    message = today+"\n\n"
+    message = "🗓️ "+today+"\n\n"
     n = 0
     dict_sport_emoji = {
         "Tenis": "🎾",
@@ -71,22 +73,47 @@ def tv(update: Update, context: CallbackContext) -> None:
         "Ciclismo": "🚴‍♀️",
         "Golf": "⛳️",
         "Balonmano": "🤾‍♀️",
-        "Badminton": "🏸"
+        "Badminton": "🏸",
+        "NFL": "🏈",
+        "Rugby": "🏈",
+        "NHL": "🏒",
+        "Motor": "🏁"
+    }
+    dict_event_formated = {
+        "liga regular": "Liga",
+        "laliga santander": "Liga",
+        "liga femenima": "Liga Femenina",
+        "dakar": "DAKAR",
+        "premier league": "Premier",
+        "united cup": "United Cup"
     }
 
-    while (cont and (n < len(data))):
-        
+    while (data[n]["day"] == today):
         emoji = dict_sport_emoji.get(data[n]["sport"],"")
-        
-        if data[n]["day"] == today:
-            line = emoji+"Deporte: "+data[n]["sport"]+"\nPartido: "+data[n]["match"]+"\n📺 "+data[n]["channel"]+"\nHora: "+data[n]["time"]+"\n\n"
-            # array = [][]
-            # array[0][0].append(line)
-            message += line
-            # update.message.reply_text(array[emoji][data[n]["sport"]])
+        line = data[n]["time"]+" "+data[n]["match"]+" ("+data[n]["channel"]+")"+"\n"
+
+        if(n>0):
+            if((data[n]["sport"] == data[n-1]["sport"]) and (data[n]["competition"] == data[n-1]["competition"]) ):
+                dict_event_copy = copy.deepcopy(dict_event)
+                dict_event_copy = list_events[-1]
+                dict_event_copy["message"] = dict_event_copy["message"] + line
+            else:
+                dict_event_copy = copy.deepcopy(dict_event)
+                dict_event_copy["sport"] = data[n]["sport"]
+                dict_event_copy["competition"] = data[n]["competition"]
+                dict_event_copy["message"] = line
+                list_events.append(dict_event_copy)
         else:
-            cont = False
+            dict_event["sport"] = data[n]["sport"]
+            dict_event["competition"] = data[n]["competition"]
+            dict_event["message"] = line
+            list_events.append(dict_event)
         n+=1
+
+    for event in range(len(list_events)):
+        emoji = dict_sport_emoji.get(list_events[event]["sport"],"")
+        message += emoji+" "+list_events[event]["competition"]+"\n"+list_events[event]["message"]+"\n"
+
     update.message.reply_text(message)
 
 def main() -> None:
