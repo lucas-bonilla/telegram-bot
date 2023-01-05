@@ -42,7 +42,7 @@ def help_command(update: Update, context: CallbackContext) -> None:
 
 def awesome_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
-    update.message.reply_text('You are awesome!')
+    update.message.reply_text('Marina, you are awesome!🥳')
 
 
 def echo(update: Update, context: CallbackContext) -> None:
@@ -52,8 +52,6 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 def tv(update: Update, context: CallbackContext) -> None:
     
-    # os.system('cd telegrambot/telegrambot/spiders && scrapy crawl marca_spider -O /log.json')
-
     with open('log.json') as f:
         data = json.load(f)
     
@@ -62,9 +60,13 @@ def tv(update: Update, context: CallbackContext) -> None:
     line = ""
     list_events = []
     dict_event = {}
+    found = True
+    n = 0
+    
     # init message body
     message = "🗓️ "+today+"\n\n"
-    n = 0
+
+    # dictionaries map
     dict_sport_emoji = {
         "Tenis": "🎾",
         "Fútbol": "⚽️",
@@ -93,11 +95,17 @@ def tv(update: Update, context: CallbackContext) -> None:
         line = data[n]["time"]+" "+data[n]["match"]+" ("+data[n]["channel"]+")"+"\n"
 
         if(n>0):
-            if((data[n]["sport"] == data[n-1]["sport"]) and (data[n]["competition"] == data[n-1]["competition"]) ):
-                dict_event_copy = copy.deepcopy(dict_event)
-                dict_event_copy = list_events[-1]
-                dict_event_copy["message"] = dict_event_copy["message"] + line
-            else:
+            m = 0
+            found = False
+            while (m<n and found == False):
+                if (data[m]['sport'] == data[n]['sport'] and data[m]['competition'] == data[n]['competition']):
+                    dict_event_copy = copy.deepcopy(dict_event)
+                    result = find_element(list_events, 'sport','competition', data[m]['sport'], data[m]['competition'])
+                    dict_event_copy = list_events[result]
+                    dict_event_copy["message"] = dict_event_copy["message"] + line
+                    found = True
+                m+=1
+            if (found == False):
                 dict_event_copy = copy.deepcopy(dict_event)
                 dict_event_copy["sport"] = data[n]["sport"]
                 dict_event_copy["competition"] = data[n]["competition"]
@@ -115,6 +123,12 @@ def tv(update: Update, context: CallbackContext) -> None:
         message += emoji+" "+list_events[event]["competition"]+"\n"+list_events[event]["message"]+"\n"
 
     update.message.reply_text(message)
+
+def find_element(array, key, key2, value, value2):
+  for dictionary in array:
+    if (dictionary[key] == value and dictionary[key2] == value2):
+      return array.index(dictionary)
+  return None
 
 def main() -> None:
     """Start the bot."""
