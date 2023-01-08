@@ -16,6 +16,10 @@ import copy
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
+from azure.storage.blob import BlobServiceClient
+
+from datetime import datetime
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -52,7 +56,7 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 def tv(update: Update, context: CallbackContext) -> None:
     
-    with open('log.json') as f:
+    with open(get_json()) as f:
         data = json.load(f)
     
     # init day 0
@@ -130,10 +134,33 @@ def find_element(array, key, key2, value, value2):
       return array.index(dictionary)
   return None
 
+def get_json():
+
+    time = datetime.now()
+    date = time.strftime("%d%m%Y")
+
+    STORAGEACCOUNTURL = "https://scraperlogs.blob.core.windows.net"
+    # STORAGEACCOUNTKEY = "r+pembbZgLEJuPN7z6E2/o+a6/TmkOK3Fb159X68+L0qd+7giu1WmSUvlDlyKI9rB0DxXF+F35l6+AStqNwz4w=="
+    STORAGEACCOUNTKEY = os.environ.get('STORAGEACCOUNTKEY')
+    CONTAINERNAME = "logs"
+    BLOBNAME = "log_"+date+".json"
+    # BLOBNAME = "myblob"
+    blob_service_client = BlobServiceClient(STORAGEACCOUNTURL, credential=STORAGEACCOUNTKEY)
+
+    download_file_path = os.path.join(os.getcwd(), str.replace("log.json" ,'.txt', 'DOWNLOAD.txt'))
+
+    container_client = blob_service_client.get_container_client(container= CONTAINERNAME) 
+    
+    with open(file=download_file_path, mode="wb") as download_file:
+        download_file.write(container_client.download_blob(BLOBNAME).readall())
+
+    return "log.json"
+
 def main() -> None:
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
-    updater = Updater("5343290755:AAGUuLbQngJIJ6EVmAGwV8o3OSgiT3MEKHI")
+    telegram_updater = os.environ.get('TELEGRAM_UPDATER')
+    updater = Updater(telegram_updater)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
