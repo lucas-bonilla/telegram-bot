@@ -140,7 +140,6 @@ def get_json():
     date = time.strftime("%d%m%Y")
 
     STORAGEACCOUNTURL = "https://scraperlogs.blob.core.windows.net"
-    # STORAGEACCOUNTKEY = "r+pembbZgLEJuPN7z6E2/o+a6/TmkOK3Fb159X68+L0qd+7giu1WmSUvlDlyKI9rB0DxXF+F35l6+AStqNwz4w=="
     STORAGEACCOUNTKEY = os.environ.get('STORAGEACCOUNTKEY')
     CONTAINERNAME = "logs"
     BLOBNAME = "log_"+date+".json"
